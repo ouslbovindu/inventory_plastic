@@ -7,14 +7,9 @@ export interface InventoryItem {
   status: 'in stock' | 'repurchase needed' | 'temporarily unavailable';
   repurchaseMargin: number;
   note: string;
+  userId: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface User {
-  id: string;
-  username: string;
-  password: string;
 }
 
 export const MATERIAL_TYPES = [

@@ -1,35 +1,60 @@
 import React, { useState } from 'react';
-import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Mail } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    if (!username || !password) {
-      setError('Please enter both username and password');
+    if (!email || !password) {
+      setError('Please enter both email and password');
       setIsLoading(false);
       return;
     }
 
-    // Simulate loading time
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const success = onLogin(username, password);
-    if (!success) {
-      setError('Invalid username or password');
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) {
+          setError(error.message);
+        } else {
+          setError('');
+          alert('Account created successfully! You can now sign in.');
+          setIsSignUp(false);
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          setError(error.message);
+        } else {
+          onLogin();
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
     }
+
     setIsLoading(false);
   };
 
@@ -38,7 +63,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <LogIn className="h-8 w-8 text-blue-600" />
+            <Mail className="h-8 w-8 text-blue-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
           <p className="text-gray-600 mt-2">Plastic Raw Materials System</p>
@@ -46,16 +71,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              Username
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
             </label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="Enter your username"
+              placeholder="Enter your email address"
             />
           </div>
 
@@ -98,15 +123,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             ) : (
               <>
                 <LogIn className="h-5 w-5 mr-2" />
-                Sign In
+                {isSignUp ? 'Create Account' : 'Sign In'}
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Default credentials:</p>
-          <p className="font-mono bg-gray-100 px-2 py-1 rounded mt-1">admin / admin123</p>
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setError('');
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
+          </button>
         </div>
       </div>
     </div>

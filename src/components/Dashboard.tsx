@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { InventoryItem } from '../types/inventory';
 import InventoryTable from './InventoryTable';
 import ItemModal from './ItemModal';
+import { supabase } from '../lib/supabase';
 import { Plus, LogOut, Package, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
 
 interface DashboardProps {
@@ -12,67 +13,140 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    loadInventory();
+    initializeUser();
   }, []);
 
-  const loadInventory = () => {
-    const saved = localStorage.getItem('inventory');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setItems(parsed.map((item: any) => ({
-          ...item,
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt)
-        })));
-      } catch (error) {
+  const initializeUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUser(user);
+      await loadInventory();
+    } else {
+      onLogout();
+    }
+    setLoading(false);
+  };
+
+  const loadInventory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
         console.error('Error loading inventory:', error);
+        return;
       }
+
+      const formattedItems = data.map((item: any) => ({
+        id: item.id,
+        itemName: item.item_name,
+        type: item.type,
+        price: item.price,
+        stock: item.stock,
+        status: item.status,
+        repurchaseMargin: item.repurchase_margin,
+        note: item.note,
+        userId: item.user_id,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at)
+      }));
+
+      setItems(formattedItems);
+    } catch (error) {
+      console.error('Error loading inventory:', error);
     }
   };
 
-  const saveInventory = (newItems: InventoryItem[]) => {
-    localStorage.setItem('inventory', JSON.stringify(newItems));
-    setItems(newItems);
+  const calculateStatus = (stock: number, repurchaseMargin: number): InventoryItem['status'] => {
+    if (stock === 0) return 'temporarily unavailable';
+    if (stock <= repurchaseMargin) return 'repurchase needed';
+    return 'in stock';
   };
 
-  const generateItemId = () => {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substr(2, 5);
-    return `${timestamp}${random}`.toUpperCase();
+  const handleAddItem = async (itemData: Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) return;
+
+    const status = calculateStatus(itemData.stock, itemData.repurchaseMargin);
+
+    try {
+      const { error } = await supabase
+        .from('inventory_items')
+        .insert({
+          item_name: itemData.itemName,
+          type: itemData.type,
+          price: itemData.price,
+          stock: itemData.stock,
+          status: status,
+          repurchase_margin: itemData.repurchaseMargin,
+          note: itemData.note,
+          user_id: user.id
+        });
+
+      if (error) {
+        console.error('Error adding item:', error);
+        return;
+      }
+
+      await loadInventory();
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
   };
 
-  const handleAddItem = (itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newItem: InventoryItem = {
-      ...itemData,
-      id: generateItemId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const newItems = [...items, newItem];
-    saveInventory(newItems);
-  };
-
-  const handleEditItem = (itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleEditItem = async (itemData: Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (!editingItem) return;
 
-    const updatedItems = items.map(item =>
-      item.id === editingItem.id
-        ? { ...itemData, id: editingItem.id, createdAt: editingItem.createdAt, updatedAt: new Date() }
-        : item
-    );
+    const status = calculateStatus(itemData.stock, itemData.repurchaseMargin);
 
-    saveInventory(updatedItems);
-    setEditingItem(null);
+    try {
+      const { error } = await supabase
+        .from('inventory_items')
+        .update({
+          item_name: itemData.itemName,
+          type: itemData.type,
+          price: itemData.price,
+          stock: itemData.stock,
+          status: status,
+          repurchase_margin: itemData.repurchaseMargin,
+          note: itemData.note
+        })
+        .eq('id', editingItem.id);
+
+      if (error) {
+        console.error('Error updating item:', error);
+        return;
+      }
+
+      await loadInventory();
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Error updating item:', error);
+    }
   };
 
-  const handleDeleteItem = (id: string) => {
+  const handleDeleteItem = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      const newItems = items.filter(item => item.id !== id);
-      saveInventory(newItems);
+      try {
+        const { error } = await supabase
+          .from('inventory_items')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error deleting item:', error);
+          return;
+        }
+
+        await loadInventory();
+      } catch (error) {
+        console.error('Error deleting item:', error);
+      }
     }
   };
 
@@ -86,6 +160,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setEditingItem(null);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    onLogout();
+  };
+
   const getStats = () => {
     const totalItems = items.length;
     const lowStockItems = items.filter(item => item.status === 'repurchase needed').length;
@@ -96,6 +175,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const stats = getStats();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,7 +196,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
             </div>
             <button
-              onClick={onLogout}
+              onClick={handleLogout}
               className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <LogOut className="h-5 w-5 mr-2" />

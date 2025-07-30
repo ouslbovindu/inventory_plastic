@@ -5,7 +5,7 @@ import { X, Save, Package } from 'lucide-react';
 interface ItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSave: (item: Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
   item?: InventoryItem | null;
 }
 
@@ -43,12 +43,6 @@ const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) 
     setErrors({});
   }, [item, isOpen]);
 
-  const calculateStatus = (stock: number, repurchaseMargin: number): InventoryItem['status'] => {
-    if (stock === 0) return 'temporarily unavailable';
-    if (stock <= repurchaseMargin) return 'repurchase needed';
-    return 'in stock';
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -79,11 +73,8 @@ const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) 
       return;
     }
 
-    const status = calculateStatus(formData.stock, formData.repurchaseMargin);
-
     onSave({
-      ...formData,
-      status
+      ...formData
     });
     
     onClose();
