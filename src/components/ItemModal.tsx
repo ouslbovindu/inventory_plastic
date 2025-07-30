@@ -1,0 +1,245 @@
+import React, { useState, useEffect } from 'react';
+import { InventoryItem, MATERIAL_TYPES } from '../types/inventory';
+import { X, Save, Package } from 'lucide-react';
+
+interface ItemModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  item?: InventoryItem | null;
+}
+
+const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) => {
+  const [formData, setFormData] = useState({
+    itemName: '',
+    type: '' as InventoryItem['type'],
+    price: 0,
+    stock: 0,
+    repurchaseMargin: 0,
+    note: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        itemName: item.itemName,
+        type: item.type,
+        price: item.price,
+        stock: item.stock,
+        repurchaseMargin: item.repurchaseMargin,
+        note: item.note
+      });
+    } else {
+      setFormData({
+        itemName: '',
+        type: '',
+        price: 0,
+        stock: 0,
+        repurchaseMargin: 0,
+        note: ''
+      });
+    }
+    setErrors({});
+  }, [item, isOpen]);
+
+  const calculateStatus = (stock: number, repurchaseMargin: number): InventoryItem['status'] => {
+    if (stock === 0) return 'temporarily unavailable';
+    if (stock <= repurchaseMargin) return 'repurchase needed';
+    return 'in stock';
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.itemName.trim()) {
+      newErrors.itemName = 'Item name is required';
+    }
+
+    if (formData.price < 0) {
+      newErrors.price = 'Price cannot be negative';
+    }
+
+    if (formData.stock < 0) {
+      newErrors.stock = 'Stock cannot be negative';
+    }
+
+    if (formData.repurchaseMargin < 0) {
+      newErrors.repurchaseMargin = 'Repurchase margin cannot be negative';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    const status = calculateStatus(formData.stock, formData.repurchaseMargin);
+
+    onSave({
+      ...formData,
+      status
+    });
+    
+    onClose();
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center">
+            <div className="bg-blue-100 p-2 rounded-lg mr-3">
+              <Package className="h-5 w-5 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {item ? 'Edit Item' : 'Add New Item'}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Item Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.itemName}
+              onChange={(e) => handleInputChange('itemName', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                errors.itemName ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="Enter item name"
+            />
+            {errors.itemName && (
+              <p className="mt-1 text-sm text-red-600">{errors.itemName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <select
+              value={formData.type}
+              onChange={(e) => handleInputChange('type', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              {MATERIAL_TYPES.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Price ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.price}
+              onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                errors.price ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0.00"
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Stock (kg)</label>
+            <input
+              type="number"
+              min="0"
+              value={formData.stock}
+              onChange={(e) => handleInputChange('stock', parseFloat(e.target.value) || 0)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                errors.stock ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0"
+            />
+            {errors.stock && (
+              <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Repurchase Margin (kg)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.repurchaseMargin}
+              onChange={(e) => handleInputChange('repurchaseMargin', parseFloat(e.target.value) || 0)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                errors.repurchaseMargin ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0"
+            />
+            {errors.repurchaseMargin && (
+              <p className="mt-1 text-sm text-red-600">{errors.repurchaseMargin}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              System will alert when stock reaches this level
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Note</label>
+            <textarea
+              value={formData.note}
+              onChange={(e) => handleInputChange('note', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              placeholder="Additional notes (optional)"
+            />
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {item ? 'Update' : 'Add'} Item
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ItemModal;
