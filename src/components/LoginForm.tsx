@@ -54,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         });
         
         if (error) {
-          if (error.message === 'Email not confirmed') {
+          if (error.message === 'Email not confirmed' || error.message.includes('email_not_confirmed')) {
             setError('Please check your email inbox (including spam/junk folders) for a confirmation link and click it to activate your account before signing in.');
             setShowResendConfirmation(true);
           } else {
