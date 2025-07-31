@@ -13,6 +13,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +56,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         if (error) {
           if (error.message === 'Email not confirmed') {
             setError('Please check your email inbox (including spam/junk folders) for a confirmation link and click it to activate your account before signing in.');
+            setShowResendConfirmation(true);
           } else {
             setError(error.message);
+            setShowResendConfirmation(false);
           }
         } else {
           onLogin();
@@ -66,6 +70,34 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
 
     setIsLoading(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setResendLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setError('');
+        alert('Confirmation email sent! Please check your inbox and spam folder.');
+      }
+    } catch (err) {
+      setError('Failed to resend confirmation email');
+    }
+
+    setResendLoading(false);
   };
 
   return (
@@ -120,6 +152,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
+              {showResendConfirmation && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={resendLoading}
+                    className="text-blue-600 hover:text-blue-800 underline text-sm disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Sending...' : 'Resend Confirmation Email'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -145,6 +189,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             onClick={() => {
               setIsSignUp(!isSignUp);
               setError('');
+              setShowResendConfirmation(false);
             }}
             className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
           >
