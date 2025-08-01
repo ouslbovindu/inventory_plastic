@@ -150,6 +150,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const handleStockAdjustment = async (id: string, newStock: number) => {
+    const item = items.find(item => item.id === id);
+    if (!item) return;
+
+    const status = calculateStatus(newStock, item.repurchaseMargin);
+
+    try {
+      const { error } = await supabase
+        .from('inventory_items')
+        .update({
+          stock: newStock,
+          status: status
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating stock:', error);
+        return;
+      }
+
+      await loadInventory();
+    } catch (error) {
+      console.error('Error updating stock:', error);
+    }
+  };
+
   const openEditModal = (item: InventoryItem) => {
     setEditingItem(item);
     setIsModalOpen(true);
@@ -275,6 +301,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           items={items}
           onEdit={openEditModal}
           onDelete={handleDeleteItem}
+          onStockAdjustment={handleStockAdjustment}
         />
 
         {/* Item Modal */}
