@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { InventoryItem } from '../types/inventory';
 import InventoryTable from './InventoryTable';
 import ItemModal from './ItemModal';
+import StockAdjustmentModal from './StockAdjustmentModal';
 import { supabase } from '../lib/supabase';
 import { Plus, LogOut, Package, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
 
@@ -13,6 +14,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [adjustingItem, setAdjustingItem] = useState<InventoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
@@ -150,11 +153,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const handleStockAdjustment = async (id: string, newStock: number) => {
-    const item = items.find(item => item.id === id);
-    if (!item) return;
-
-    const status = calculateStatus(newStock, item.repurchaseMargin);
+  const handleStockAdjustment = async (newStock: number) => {
+    if (!adjustingItem) return;
+    
+    const status = calculateStatus(newStock, adjustingItem.repurchaseMargin);
 
     try {
       const { error } = await supabase
@@ -163,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           stock: newStock,
           status: status
         })
-        .eq('id', id);
+        .eq('id', adjustingItem.id);
 
       if (error) {
         console.error('Error updating stock:', error);
@@ -174,6 +176,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     } catch (error) {
       console.error('Error updating stock:', error);
     }
+  };
+
+  const openStockAdjustmentModal = (item: InventoryItem) => {
+    setAdjustingItem(item);
+    setIsStockModalOpen(true);
+  };
+
+  const closeStockModal = () => {
+    setIsStockModalOpen(false);
+    setAdjustingItem(null);
   };
 
   const openEditModal = (item: InventoryItem) => {
@@ -301,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           items={items}
           onEdit={openEditModal}
           onDelete={handleDeleteItem}
-          onStockAdjustment={handleStockAdjustment}
+          onOpenStockAdjustment={openStockAdjustmentModal}
         />
 
         {/* Item Modal */}
@@ -310,6 +322,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closeModal}
           onSave={editingItem ? handleEditItem : handleAddItem}
           item={editingItem}
+        />
+
+        {/* Stock Adjustment Modal */}
+        <StockAdjustmentModal
+          isOpen={isStockModalOpen}
+          onClose={closeStockModal}
+          onAdjust={handleStockAdjustment}
+          item={adjustingItem}
         />
       </div>
     </div>

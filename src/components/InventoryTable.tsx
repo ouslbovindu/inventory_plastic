@@ -1,15 +1,15 @@
 import React from 'react';
 import { InventoryItem } from '../types/inventory';
-import { Edit, Trash2, AlertTriangle, CheckCircle, XCircle, Plus, Minus } from 'lucide-react';
+import { Edit, Trash2, AlertTriangle, CheckCircle, XCircle, Settings } from 'lucide-react';
 
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
-  onStockAdjustment: (id: string, newStock: number) => void;
+  onOpenStockAdjustment: (item: InventoryItem) => void;
 }
 
-const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete, onStockAdjustment }) => {
+const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete, onOpenStockAdjustment }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in stock':
@@ -39,11 +39,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
 
   const formatPrice = (price: number) => {
     return price > 0 ? `$${price.toFixed(2)}` : '-';
-  };
-
-  const handleStockAdjustment = (item: InventoryItem, adjustment: number) => {
-    const newStock = Math.max(0, item.stock + adjustment);
-    onStockAdjustment(item.id, newStock);
   };
 
   if (items.length === 0) {
@@ -115,23 +110,14 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
                   {item.stock} kg
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleStockAdjustment(item, -1)}
-                      disabled={item.stock <= 0}
-                      className="p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Remove 1 kg"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => handleStockAdjustment(item, 1)}
-                      className="p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                      title="Add 1 kg"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => onOpenStockAdjustment(item)}
+                    className="px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-sm"
+                    title="Adjust stock"
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    Adjust
+                  </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getStatusBadge(item.status)}>
