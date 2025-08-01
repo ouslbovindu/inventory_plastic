@@ -1,14 +1,15 @@
 import React from 'react';
 import { InventoryItem } from '../types/inventory';
-import { Edit, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Edit, Trash2, AlertTriangle, CheckCircle, XCircle, Plus, Minus } from 'lucide-react';
 
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
+  onStockAdjustment: (id: string, newStock: number) => void;
 }
 
-const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete }) => {
+const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete, onStockAdjustment }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in stock':
@@ -38,6 +39,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
 
   const formatPrice = (price: number) => {
     return price > 0 ? `$${price.toFixed(2)}` : '-';
+  };
+
+  const handleStockAdjustment = (item: InventoryItem, adjustment: number) => {
+    const newStock = Math.max(0, item.stock + adjustment);
+    onStockAdjustment(item.id, newStock);
   };
 
   if (items.length === 0) {
@@ -74,6 +80,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
                 Stock (kg)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quick Adjust
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -104,6 +113,25 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.stock} kg
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleStockAdjustment(item, -1)}
+                      disabled={item.stock <= 0}
+                      className="p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Remove 1 kg"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleStockAdjustment(item, 1)}
+                      className="p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                      title="Add 1 kg"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getStatusBadge(item.status)}>
