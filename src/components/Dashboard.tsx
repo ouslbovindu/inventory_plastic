@@ -572,7 +572,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Materials Value</p>
-                    <p className="text-2xl font-bold text-green-600">${stats.materialsValue.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">Rs.{stats.materialsValue.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
