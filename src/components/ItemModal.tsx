@@ -144,7 +144,7 @@ const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price ($)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Price (Rs.)</label>
             <input
               type="number"
               step="0.01"
