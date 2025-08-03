@@ -11,6 +11,10 @@ function App() {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      // Clear stale tokens if no valid session exists
+      if (!session) {
+        supabase.auth.signOut();
+      }
       setIsLoading(false);
     });
 
