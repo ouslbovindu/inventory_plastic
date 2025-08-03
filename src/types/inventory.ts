@@ -25,3 +25,26 @@ export const STATUS_TYPES = [
   { value: 'repurchase needed', label: 'Repurchase Needed' },
   { value: 'temporarily unavailable', label: 'Temporarily Unavailable' }
 ];
+
+export interface Asset {
+  id: string;
+  itemName: string;
+  price: number;
+  quantity: string;
+  purchasedDate: Date | null;
+  note: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Production {
+  id: string;
+  itemName: string;
+  quantity: string;
+  client: string;
+  note: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

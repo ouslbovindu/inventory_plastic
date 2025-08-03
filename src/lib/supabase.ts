@@ -53,6 +53,73 @@ export type Database = {
           updated_at?: string;
         };
       };
+      assets: {
+        Row: {
+          id: string;
+          item_name: string;
+          price: number;
+          quantity: string;
+          purchased_date: string | null;
+          note: string;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_name: string;
+          price?: number;
+          quantity?: string;
+          purchased_date?: string | null;
+          note?: string;
+          user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_name?: string;
+          price?: number;
+          quantity?: string;
+          purchased_date?: string | null;
+          note?: string;
+          user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      productions: {
+        Row: {
+          id: string;
+          item_name: string;
+          quantity: string;
+          client: string;
+          note: string;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_name: string;
+          quantity?: string;
+          client: string;
+          note?: string;
+          user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_name?: string;
+          quantity?: string;
+          client?: string;
+          note?: string;
+          user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };
