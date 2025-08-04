@@ -7,9 +7,10 @@ interface ItemModalProps {
   onClose: () => void;
   onSave: (item: Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
   item?: InventoryItem | null;
+  siteLocation: string;
 }
 
-const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) => {
+const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item, siteLocation }) => {
   const [formData, setFormData] = useState({
     itemName: '',
     type: '' as InventoryItem['type'],
@@ -74,7 +75,8 @@ const ItemModal: React.FC<ItemModalProps> = ({ isOpen, onClose, onSave, item }) 
     }
 
     onSave({
-      ...formData
+      ...formData,
+      siteLocation
     });
     
     onClose();

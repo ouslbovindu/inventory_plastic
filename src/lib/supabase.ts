@@ -23,6 +23,7 @@ export type Database = {
           repurchase_margin: number;
           note: string;
           user_id: string;
+          site_location: string;
           created_at: string;
           updated_at: string;
         };
@@ -36,6 +37,7 @@ export type Database = {
           repurchase_margin?: number;
           note?: string;
           user_id: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -49,6 +51,7 @@ export type Database = {
           repurchase_margin?: number;
           note?: string;
           user_id?: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -59,9 +62,11 @@ export type Database = {
           item_name: string;
           price: number;
           quantity: string;
+          quantity_numeric: number;
           purchased_date: string | null;
           note: string;
           user_id: string;
+          site_location: string;
           created_at: string;
           updated_at: string;
         };
@@ -70,9 +75,11 @@ export type Database = {
           item_name: string;
           price?: number;
           quantity?: string;
+          quantity_numeric?: number;
           purchased_date?: string | null;
           note?: string;
           user_id: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -81,9 +88,11 @@ export type Database = {
           item_name?: string;
           price?: number;
           quantity?: string;
+          quantity_numeric?: number;
           purchased_date?: string | null;
           note?: string;
           user_id?: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -93,9 +102,11 @@ export type Database = {
           id: string;
           item_name: string;
           quantity: string;
+          quantity_numeric: number;
           client: string;
           note: string;
           user_id: string;
+          site_location: string;
           created_at: string;
           updated_at: string;
         };
@@ -103,9 +114,11 @@ export type Database = {
           id?: string;
           item_name: string;
           quantity?: string;
+          quantity_numeric?: number;
           client: string;
           note?: string;
           user_id: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -113,9 +126,11 @@ export type Database = {
           id?: string;
           item_name?: string;
           quantity?: string;
+          quantity_numeric?: number;
           client?: string;
           note?: string;
           user_id?: string;
+          site_location?: string;
           created_at?: string;
           updated_at?: string;
         };

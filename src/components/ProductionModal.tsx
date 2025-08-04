@@ -7,12 +7,14 @@ interface ProductionModalProps {
   onClose: () => void;
   onSave: (production: Omit<Production, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
   production?: Production | null;
+  siteLocation: string;
 }
 
-const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSave, production }) => {
+const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSave, production, siteLocation }) => {
   const [formData, setFormData] = useState({
     itemName: '',
     quantity: '',
+    quantityNumeric: 0,
     client: '',
     note: ''
   });
@@ -23,6 +25,7 @@ const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSa
       setFormData({
         itemName: production.itemName,
         quantity: production.quantity,
+        quantityNumeric: production.quantityNumeric,
         client: production.client,
         note: production.note
       });
@@ -30,6 +33,7 @@ const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSa
       setFormData({
         itemName: '',
         quantity: '',
+        quantityNumeric: 0,
         client: '',
         note: ''
       });
@@ -60,7 +64,8 @@ const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSa
     }
 
     onSave({
-      ...formData
+      ...formData,
+      siteLocation
     });
     
     onClose();
@@ -123,6 +128,22 @@ const ProductionModal: React.FC<ProductionModalProps> = ({ isOpen, onClose, onSa
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="e.g., 100 pieces, 50 kg, 25 units"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Numeric Quantity</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.quantityNumeric}
+              onChange={(e) => handleInputChange('quantityNumeric', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              placeholder="0.00"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Numeric value for quantity adjustments
+            </p>
           </div>
 
           <div>

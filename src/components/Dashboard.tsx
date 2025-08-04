@@ -7,6 +7,8 @@ import ItemModal from './ItemModal';
 import AssetModal from './AssetModal';
 import ProductionModal from './ProductionModal';
 import StockAdjustmentModal from './StockAdjustmentModal';
+import AssetAdjustmentModal from './AssetAdjustmentModal';
+import ProductionAdjustmentModal from './ProductionAdjustmentModal';
 import { supabase } from '../lib/supabase';
 import { Plus, LogOut, Package, AlertTriangle, TrendingUp, BarChart3, Wrench, Factory } from 'lucide-react';
 
@@ -26,9 +28,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [editingProduction, setEditingProduction] = useState<Production | null>(null);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [isAssetAdjustModalOpen, setIsAssetAdjustModalOpen] = useState(false);
+  const [isProductionAdjustModalOpen, setIsProductionAdjustModalOpen] = useState(false);
   const [adjustingItem, setAdjustingItem] = useState<InventoryItem | null>(null);
+  const [adjustingAsset, setAdjustingAsset] = useState<Asset | null>(null);
+  const [adjustingProduction, setAdjustingProduction] = useState<Production | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [selectedSite, setSelectedSite] = useState<string>('Site 1');
+
+  const SITE_LOCATIONS = ['Site 1', 'Site 2'];
 
   useEffect(() => {
     initializeUser();
@@ -52,6 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const { data, error } = await supabase
         .from('inventory_items')
         .select('*')
+        .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -69,6 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         repurchaseMargin: item.repurchase_margin,
         note: item.note,
         userId: item.user_id,
+        siteLocation: item.site_location,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at)
       }));
@@ -84,6 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const { data, error } = await supabase
         .from('assets')
         .select('*')
+        .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -96,9 +108,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         itemName: asset.item_name,
         price: asset.price,
         quantity: asset.quantity,
+        quantityNumeric: asset.quantity_numeric,
         purchasedDate: asset.purchased_date ? new Date(asset.purchased_date) : null,
         note: asset.note,
         userId: asset.user_id,
+        siteLocation: asset.site_location,
         createdAt: new Date(asset.created_at),
         updatedAt: new Date(asset.updated_at)
       }));
@@ -114,6 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const { data, error } = await supabase
         .from('productions')
         .select('*')
+        .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -125,9 +140,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         id: production.id,
         itemName: production.item_name,
         quantity: production.quantity,
+        quantityNumeric: production.quantity_numeric,
         client: production.client,
         note: production.note,
         userId: production.user_id,
+        siteLocation: production.site_location,
         createdAt: new Date(production.created_at),
         updatedAt: new Date(production.updated_at)
       }));
@@ -160,7 +177,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           status: status,
           repurchase_margin: itemData.repurchaseMargin,
           note: itemData.note,
-          user_id: user.id
+          user_id: user.id,
+          site_location: selectedSite
         });
 
       if (error) {
@@ -184,9 +202,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           item_name: assetData.itemName,
           price: assetData.price,
           quantity: assetData.quantity,
+          quantity_numeric: assetData.quantityNumeric,
           purchased_date: assetData.purchasedDate ? assetData.purchasedDate.toISOString().split('T')[0] : null,
           note: assetData.note,
-          user_id: user.id
+          user_id: user.id,
+          site_location: selectedSite
         });
 
       if (error) {
@@ -209,9 +229,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         .insert({
           item_name: productionData.itemName,
           quantity: productionData.quantity,
+          quantity_numeric: productionData.quantityNumeric,
           client: productionData.client,
           note: productionData.note,
-          user_id: user.id
+          user_id: user.id,
+          site_location: selectedSite
         });
 
       if (error) {
@@ -266,6 +288,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           item_name: assetData.itemName,
           price: assetData.price,
           quantity: assetData.quantity,
+          quantity_numeric: assetData.quantityNumeric,
           purchased_date: assetData.purchasedDate ? assetData.purchasedDate.toISOString().split('T')[0] : null,
           note: assetData.note
         })
@@ -292,6 +315,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         .update({
           item_name: productionData.itemName,
           quantity: productionData.quantity,
+          quantity_numeric: productionData.quantityNumeric,
           client: productionData.client,
           note: productionData.note
         })
@@ -394,6 +418,50 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const handleAssetQuantityAdjustment = async (newQuantity: number) => {
+    if (!adjustingAsset) return;
+
+    try {
+      const { error } = await supabase
+        .from('assets')
+        .update({
+          quantity_numeric: newQuantity
+        })
+        .eq('id', adjustingAsset.id);
+
+      if (error) {
+        console.error('Error updating asset quantity:', error);
+        return;
+      }
+
+      await loadAssets();
+    } catch (error) {
+      console.error('Error updating asset quantity:', error);
+    }
+  };
+
+  const handleProductionQuantityAdjustment = async (newQuantity: number) => {
+    if (!adjustingProduction) return;
+
+    try {
+      const { error } = await supabase
+        .from('productions')
+        .update({
+          quantity_numeric: newQuantity
+        })
+        .eq('id', adjustingProduction.id);
+
+      if (error) {
+        console.error('Error updating production quantity:', error);
+        return;
+      }
+
+      await loadProductions();
+    } catch (error) {
+      console.error('Error updating production quantity:', error);
+    }
+  };
+
   const openStockAdjustmentModal = (item: InventoryItem) => {
     setAdjustingItem(item);
     setIsStockModalOpen(true);
@@ -402,6 +470,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const closeStockModal = () => {
     setIsStockModalOpen(false);
     setAdjustingItem(null);
+  };
+
+  const openAssetAdjustmentModal = (asset: Asset) => {
+    setAdjustingAsset(asset);
+    setIsAssetAdjustModalOpen(true);
+  };
+
+  const closeAssetAdjustModal = () => {
+    setIsAssetAdjustModalOpen(false);
+    setAdjustingAsset(null);
+  };
+
+  const openProductionAdjustmentModal = (production: Production) => {
+    setAdjustingProduction(production);
+    setIsProductionAdjustModalOpen(true);
+  };
+
+  const closeProductionAdjustModal = () => {
+    setIsProductionAdjustModalOpen(false);
+    setAdjustingProduction(null);
   };
 
   const openEditModal = (item: InventoryItem) => {
@@ -453,6 +541,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const stats = getStats();
 
+  // Reload data when site changes
+  useEffect(() => {
+    if (user) {
+      loadInventory();
+      loadAssets();
+      loadProductions();
+    }
+  }, [selectedSite, user]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -472,13 +569,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Business Management System</h1>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Logout
-            </button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Site:</label>
+                <select
+                  value={selectedSite}
+                  onChange={(e) => setSelectedSite(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  {SITE_LOCATIONS.map(site => (
+                    <option key={site} value={site}>{site}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <LogOut className="h-5 w-5 mr-2" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -624,11 +735,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
         {/* Action Bar */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {activeTab === 'materials' && 'Materials'}
-            {activeTab === 'assets' && 'Assets'}
-            {activeTab === 'productions' && 'Productions'}
-          </h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {activeTab === 'materials' && 'Materials'}
+              {activeTab === 'assets' && 'Assets'}
+              {activeTab === 'productions' && 'Productions'}
+            </h2>
+            <p className="text-sm text-gray-600">{selectedSite}</p>
+          </div>
           <button
             onClick={() => {
               if (activeTab === 'materials') setIsModalOpen(true);
@@ -657,6 +771,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             assets={assets}
             onEdit={openEditAssetModal}
             onDelete={handleDeleteAsset}
+            onOpenQuantityAdjustment={openAssetAdjustmentModal}
           />
         )}
 
@@ -665,6 +780,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             productions={productions}
             onEdit={openEditProductionModal}
             onDelete={handleDeleteProduction}
+            onOpenQuantityAdjustment={openProductionAdjustmentModal}
           />
         )}
 
@@ -674,6 +790,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closeModal}
           onSave={editingItem ? handleEditItem : handleAddItem}
           item={editingItem}
+          siteLocation={selectedSite}
         />
 
         <AssetModal
@@ -681,6 +798,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closeAssetModal}
           onSave={editingAsset ? handleEditAsset : handleAddAsset}
           asset={editingAsset}
+          siteLocation={selectedSite}
         />
 
         <ProductionModal
@@ -688,6 +806,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closeProductionModal}
           onSave={editingProduction ? handleEditProduction : handleAddProduction}
           production={editingProduction}
+          siteLocation={selectedSite}
         />
 
         {/* Stock Adjustment Modal */}
@@ -696,6 +815,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closeStockModal}
           onAdjust={handleStockAdjustment}
           item={adjustingItem}
+        />
+
+        {/* Asset Adjustment Modal */}
+        <AssetAdjustmentModal
+          isOpen={isAssetAdjustModalOpen}
+          onClose={closeAssetAdjustModal}
+          onAdjust={handleAssetQuantityAdjustment}
+          asset={adjustingAsset}
+        />
+
+        {/* Production Adjustment Modal */}
+        <ProductionAdjustmentModal
+          isOpen={isProductionAdjustModalOpen}
+          onClose={closeProductionAdjustModal}
+          onAdjust={handleProductionQuantityAdjustment}
+          production={adjustingProduction}
         />
       </div>
     </div>

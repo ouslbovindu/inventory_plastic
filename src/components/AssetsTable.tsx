@@ -1,14 +1,16 @@
 import React from 'react';
 import { Asset } from '../types/inventory';
 import { Edit, Trash2, Calendar } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface AssetsTableProps {
   assets: Asset[];
   onEdit: (asset: Asset) => void;
   onDelete: (id: string) => void;
+  onOpenQuantityAdjustment: (asset: Asset) => void;
 }
 
-const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete }) => {
+const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onOpenQuantityAdjustment }) => {
   const formatPrice = (price: number) => {
     return price > 0 ? `$${price.toFixed(2)}` : '-';
   };
@@ -49,6 +51,9 @@ const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete }) =
                 Quantity
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quick Adjust
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Purchased Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -73,6 +78,16 @@ const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete }) =
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.quantity || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => onOpenQuantityAdjustment(asset)}
+                    className="px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-sm"
+                    title="Adjust quantity"
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    Adjust
+                  </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatDate(asset.purchasedDate)}

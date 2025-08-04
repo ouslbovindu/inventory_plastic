@@ -8,6 +8,7 @@ export interface InventoryItem {
   repurchaseMargin: number;
   note: string;
   userId: string;
+  siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,9 +32,11 @@ export interface Asset {
   itemName: string;
   price: number;
   quantity: string;
+  quantityNumeric: number;
   purchasedDate: Date | null;
   note: string;
   userId: string;
+  siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,9 +45,11 @@ export interface Production {
   id: string;
   itemName: string;
   quantity: string;
+  quantityNumeric: number;
   client: string;
   note: string;
   userId: string;
+  siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
 }

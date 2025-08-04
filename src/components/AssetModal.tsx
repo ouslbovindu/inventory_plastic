@@ -7,13 +7,15 @@ interface AssetModalProps {
   onClose: () => void;
   onSave: (asset: Omit<Asset, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
   asset?: Asset | null;
+  siteLocation: string;
 }
 
-const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset }) => {
+const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset, siteLocation }) => {
   const [formData, setFormData] = useState({
     itemName: '',
     price: 0,
     quantity: '',
+    quantityNumeric: 0,
     purchasedDate: null as Date | null,
     note: ''
   });
@@ -25,6 +27,7 @@ const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset 
         itemName: asset.itemName,
         price: asset.price,
         quantity: asset.quantity,
+        quantityNumeric: asset.quantityNumeric,
         purchasedDate: asset.purchasedDate,
         note: asset.note
       });
@@ -33,6 +36,7 @@ const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset 
         itemName: '',
         price: 0,
         quantity: '',
+        quantityNumeric: 0,
         purchasedDate: null,
         note: ''
       });
@@ -63,7 +67,8 @@ const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset 
     }
 
     onSave({
-      ...formData
+      ...formData,
+      siteLocation
     });
     
     onClose();
@@ -154,6 +159,22 @@ const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, asset 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="e.g., 5 units, 10 kg, 1 piece"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Numeric Quantity</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.quantityNumeric}
+              onChange={(e) => handleInputChange('quantityNumeric', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              placeholder="0.00"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Numeric value for quantity adjustments
+            </p>
           </div>
 
           <div>

@@ -1,14 +1,16 @@
 import React from 'react';
 import { Production } from '../types/inventory';
 import { Edit, Trash2, Factory } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface ProductionsTableProps {
   productions: Production[];
   onEdit: (production: Production) => void;
   onDelete: (id: string) => void;
+  onOpenQuantityAdjustment: (production: Production) => void;
 }
 
-const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit, onDelete }) => {
+const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit, onDelete, onOpenQuantityAdjustment }) => {
   if (productions.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-8 text-center">
@@ -37,6 +39,9 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit
                 Quantity
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quick Adjust
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Client
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -58,6 +63,16 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {production.quantity || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => onOpenQuantityAdjustment(production)}
+                    className="px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-sm"
+                    title="Adjust quantity"
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    Adjust
+                  </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {production.client}
