@@ -567,7 +567,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               <div className="bg-blue-100 p-2 rounded-lg mr-3">
                 <Package className="h-6 w-6 text-blue-600" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Business Management System</h1>
+              <h1 className="text-xl font-bold text-gray-900">Business Management System</h1>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
