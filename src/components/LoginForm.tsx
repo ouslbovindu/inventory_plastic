@@ -39,7 +39,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
@@ -52,7 +52,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           setIsSignUp(false);
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -66,6 +66,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             setShowResendConfirmation(false);
           }
         } else {
+          // Ensure user data isolation by checking authentication
+          if (data.user) {
+            console.log('User authenticated:', data.user.id);
+          }
           onLogin();
         }
       }

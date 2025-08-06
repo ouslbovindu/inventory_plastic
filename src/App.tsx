@@ -11,16 +11,24 @@ function App() {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
-      // Clear stale tokens if no valid session exists
-      if (!session) {
+      
+      // Only clear tokens if there's an invalid session, not just no session
+      if (session && !session.user) {
+        console.log('Invalid session detected, signing out');
         supabase.auth.signOut();
       }
       setIsLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
       setIsAuthenticated(!!session);
+      
+      // Handle sign out
+      if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -44,7 +44,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   }, []);
 
   const initializeUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      console.error('Error getting user:', error);
+      onLogout();
+      return;
+    }
+    
     if (user) {
       setUser(user);
       await loadInventory();
@@ -58,9 +65,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const loadInventory = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('inventory_items')
         .select('*')
+        .eq('user_id', user.id)
         .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
@@ -92,9 +106,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const loadAssets = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('assets')
         .select('*')
+        .eq('user_id', user.id)
         .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
@@ -125,9 +146,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const loadProductions = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('productions')
         .select('*')
+        .eq('user_id', user.id)
         .eq('site_location', selectedSite)
         .order('created_at', { ascending: false });
 
