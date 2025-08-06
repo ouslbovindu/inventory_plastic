@@ -12,7 +12,7 @@ interface AssetsTableProps {
 
 const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onOpenQuantityAdjustment }) => {
   const formatPrice = (price: number) => {
-    return price > 0 ? `$${price.toFixed(2)}` : '-';
+    return price > 0 ? `Rs.${price.toFixed(2)}` : '-';
   };
 
   const formatDate = (date: Date | null) => {
