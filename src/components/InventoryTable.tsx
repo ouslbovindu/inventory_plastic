@@ -4,12 +4,13 @@ import { Edit, Trash2, AlertTriangle, CheckCircle, XCircle, Settings } from 'luc
 
 interface InventoryTableProps {
   items: InventoryItem[];
-  onEdit: (item: InventoryItem) => void;
-  onDelete: (id: string) => void;
-  onOpenStockAdjustment: (item: InventoryItem) => void;
+  onEdit?: (item: InventoryItem) => void;
+  onDelete?: (id: string) => void;
+  onOpenStockAdjustment?: (item: InventoryItem) => void;
+  userType: 'regular' | 'worker';
 }
 
-const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete, onOpenStockAdjustment }) => {
+const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete, onOpenStockAdjustment, userType }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in stock':
@@ -110,14 +111,16 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
                   {item.stock} kg
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                  <button
+                  {onOpenStockAdjustment && (
+                    <button
                     onClick={() => onOpenStockAdjustment(item)}
                     className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-xs sm:text-sm"
                     title="Adjust stock"
-                  >
+                    >
                     <Settings className="h-3 w-3 mr-1 sm:mr-1" />
                     Adjust
-                  </button>
+                    </button>
+                  )}
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                   <span className={getStatusBadge(item.status)}>
@@ -133,27 +136,33 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, onEdit, onDelete
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex flex-col lg:flex-row gap-1 lg:gap-2">
-                    <button
+                    {onOpenStockAdjustment && (
+                      <button
                       onClick={() => onOpenStockAdjustment(item)}
                       className="lg:hidden px-2 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded transition-colors text-xs"
                       title="Adjust stock"
-                    >
+                      >
                       <Settings className="h-3 w-3" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button
                       onClick={() => onEdit(item)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
                       title="Edit item"
-                    >
+                      >
                       <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
                       onClick={() => onDelete(item.id)}
                       className="text-red-600 hover:text-red-900 transition-colors"
                       title="Delete item"
-                    >
+                      >
                       <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

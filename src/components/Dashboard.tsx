@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { InventoryItem, Asset, Production } from '../types/inventory';
+import { InventoryItem, Asset, Production, WorkerAccount } from '../types/inventory';
 import InventoryTable from './InventoryTable';
 import AssetsTable from './AssetsTable';
 import ProductionsTable from './ProductionsTable';
@@ -14,13 +14,17 @@ import { Plus, LogOut, Package, AlertTriangle, TrendingUp, BarChart3, Wrench, Fa
 
 interface DashboardProps {
   onLogout: () => void;
+  userType: 'regular' | 'worker';
+  workerData?: WorkerAccount | null;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData }) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [productions, setProductions] = useState<Production[]>([]);
-  const [activeTab, setActiveTab] = useState<'materials' | 'assets' | 'productions'>('materials');
+  const [activeTab, setActiveTab] = useState<'materials' | 'assets' | 'productions'>(
+    userType === 'worker' ? 'materials' : 'materials'
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [isProductionModalOpen, setIsProductionModalOpen] = useState(false);
@@ -38,12 +42,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [selectedSite, setSelectedSite] = useState<string>('Site 1');
 
   const SITE_LOCATIONS = ['Site 1', 'Site 2'];
+  
+  // Check permissions for worker accounts
+  const hasPermission = (module: 'materials' | 'assets' | 'productions', action: 'view' | 'add' | 'edit' | 'delete' | 'adjust') => {
+    if (userType === 'regular') return true;
+    if (!workerData) return false;
+    return workerData.permissions[module]?.[action] || false;
+  };
 
   useEffect(() => {
-    initializeUser();
+    if (userType === 'regular') {
+      initializeUser();
+    } else {
+      // For worker accounts, skip user initialization and load data directly
+      setLoading(false);
+      loadInventory();
+      loadProductions();
+    }
   }, []);
 
   const initializeUser = async () => {
+    if (userType === 'worker') {
+      setLoading(false);
+      return;
+    }
+    
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
@@ -550,12 +573,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   // Reload data when site changes
   useEffect(() => {
-    if (user) {
+    if (user || userType === 'worker') {
       loadInventory();
-      loadAssets();
+      if (userType === 'regular') {
+        loadAssets();
+      }
       loadProductions();
     }
-  }, [selectedSite, user]);
+  }, [selectedSite, user, userType]);
 
   if (loading) {
     return (
@@ -574,7 +599,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               <div className="bg-blue-100 p-2 rounded-lg mr-3">
                 <Package className="h-6 w-6 text-blue-600" />
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900">Business Management System</h1>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Business Management System</h1>
+                {userType === 'worker' && workerData && (
+                  <p className="text-sm text-gray-600">Worker: {workerData.username}</p>
+                )}
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <div className="flex items-center gap-2">
@@ -607,33 +637,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           <nav className="-mb-px flex flex-wrap gap-4 sm:gap-8">
             <button
               onClick={() => setActiveTab('materials')}
+              disabled={!hasPermission('materials', 'view')}
               className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'materials'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                  : hasPermission('materials', 'view')
+                    ? 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-300 cursor-not-allowed'
+              } ${!hasPermission('materials', 'view') ? 'opacity-50' : ''}`}
             >
               <Package className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
               Materials
             </button>
-            <button
-              onClick={() => setActiveTab('assets')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'assets'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Wrench className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
-              Assets
-            </button>
+            {hasPermission('assets', 'view') && (
+              <button
+                onClick={() => setActiveTab('assets')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === 'assets'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Wrench className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
+                Assets
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('productions')}
+              disabled={!hasPermission('productions', 'view')}
               className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'productions'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                  : hasPermission('productions', 'view')
+                    ? 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-300 cursor-not-allowed'
+              } ${!hasPermission('productions', 'view') ? 'opacity-50' : ''}`}
             >
               <Factory className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
               Productions
@@ -750,95 +788,114 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             </h2>
             <p className="text-sm text-gray-600">{selectedSite}</p>
           </div>
-          <button
-            onClick={() => {
-              if (activeTab === 'materials') setIsModalOpen(true);
-              else if (activeTab === 'assets') setIsAssetModalOpen(true);
-              else if (activeTab === 'productions') setIsProductionModalOpen(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start"
-          >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            Add {activeTab === 'materials' ? 'Material' : activeTab === 'assets' ? 'Asset' : 'Production'}
-          </button>
+          {((activeTab === 'materials' && hasPermission('materials', 'add')) ||
+            (activeTab === 'assets' && hasPermission('assets', 'add')) ||
+            (activeTab === 'productions' && hasPermission('productions', 'add'))) && (
+            <button
+              onClick={() => {
+                if (activeTab === 'materials') setIsModalOpen(true);
+                else if (activeTab === 'assets') setIsAssetModalOpen(true);
+                else if (activeTab === 'productions') setIsProductionModalOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start"
+            >
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              Add {activeTab === 'materials' ? 'Material' : activeTab === 'assets' ? 'Asset' : 'Production'}
+            </button>
+          )}
         </div>
 
         {/* Tables */}
-        {activeTab === 'materials' && (
+        {activeTab === 'materials' && hasPermission('materials', 'view') && (
           <InventoryTable
             items={items}
-            onEdit={openEditModal}
-            onDelete={handleDeleteItem}
-            onOpenStockAdjustment={openStockAdjustmentModal}
+            onEdit={hasPermission('materials', 'edit') ? openEditModal : undefined}
+            onDelete={hasPermission('materials', 'delete') ? handleDeleteItem : undefined}
+            onOpenStockAdjustment={hasPermission('materials', 'adjust') ? openStockAdjustmentModal : undefined}
+            userType={userType}
           />
         )}
 
-        {activeTab === 'assets' && (
+        {activeTab === 'assets' && hasPermission('assets', 'view') && (
           <AssetsTable
             assets={assets}
-            onEdit={openEditAssetModal}
-            onDelete={handleDeleteAsset}
-            onOpenQuantityAdjustment={openAssetAdjustmentModal}
+            onEdit={hasPermission('assets', 'edit') ? openEditAssetModal : undefined}
+            onDelete={hasPermission('assets', 'delete') ? handleDeleteAsset : undefined}
+            onOpenQuantityAdjustment={hasPermission('assets', 'adjust') ? openAssetAdjustmentModal : undefined}
+            userType={userType}
           />
         )}
 
-        {activeTab === 'productions' && (
+        {activeTab === 'productions' && hasPermission('productions', 'view') && (
           <ProductionsTable
             productions={productions}
-            onEdit={openEditProductionModal}
-            onDelete={handleDeleteProduction}
-            onOpenQuantityAdjustment={openProductionAdjustmentModal}
+            onEdit={hasPermission('productions', 'edit') ? openEditProductionModal : undefined}
+            onDelete={hasPermission('productions', 'delete') ? handleDeleteProduction : undefined}
+            onOpenQuantityAdjustment={hasPermission('productions', 'adjust') ? openProductionAdjustmentModal : undefined}
+            userType={userType}
           />
         )}
 
         {/* Modals */}
-        <ItemModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          onSave={editingItem ? handleEditItem : handleAddItem}
-          item={editingItem}
-          siteLocation={selectedSite}
-        />
+        {hasPermission('materials', 'add') || hasPermission('materials', 'edit') ? (
+          <ItemModal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            onSave={editingItem ? handleEditItem : handleAddItem}
+            item={editingItem}
+            siteLocation={selectedSite}
+          />
+        ) : null}
 
-        <AssetModal
-          isOpen={isAssetModalOpen}
-          onClose={closeAssetModal}
-          onSave={editingAsset ? handleEditAsset : handleAddAsset}
-          asset={editingAsset}
-          siteLocation={selectedSite}
-        />
+        {hasPermission('assets', 'add') || hasPermission('assets', 'edit') ? (
+          <AssetModal
+            isOpen={isAssetModalOpen}
+            onClose={closeAssetModal}
+            onSave={editingAsset ? handleEditAsset : handleAddAsset}
+            asset={editingAsset}
+            siteLocation={selectedSite}
+          />
+        ) : null}
 
-        <ProductionModal
-          isOpen={isProductionModalOpen}
-          onClose={closeProductionModal}
-          onSave={editingProduction ? handleEditProduction : handleAddProduction}
-          production={editingProduction}
-          siteLocation={selectedSite}
-        />
+        {hasPermission('productions', 'add') || hasPermission('productions', 'edit') ? (
+          <ProductionModal
+            isOpen={isProductionModalOpen}
+            onClose={closeProductionModal}
+            onSave={editingProduction ? handleEditProduction : handleAddProduction}
+            production={editingProduction}
+            siteLocation={selectedSite}
+          />
+        ) : null}
 
         {/* Stock Adjustment Modal */}
-        <StockAdjustmentModal
-          isOpen={isStockModalOpen}
-          onClose={closeStockModal}
-          onAdjust={handleStockAdjustment}
-          item={adjustingItem}
-        />
+        {hasPermission('materials', 'adjust') && (
+          <StockAdjustmentModal
+            isOpen={isStockModalOpen}
+            onClose={closeStockModal}
+            onAdjust={handleStockAdjustment}
+            item={adjustingItem}
+          />
+        )}
 
         {/* Asset Adjustment Modal */}
-        <AssetAdjustmentModal
-          isOpen={isAssetAdjustModalOpen}
-          onClose={closeAssetAdjustModal}
-          onAdjust={handleAssetQuantityAdjustment}
-          asset={adjustingAsset}
-        />
+        {hasPermission('assets', 'adjust') && (
+          <AssetAdjustmentModal
+            isOpen={isAssetAdjustModalOpen}
+            onClose={closeAssetAdjustModal}
+            onAdjust={handleAssetQuantityAdjustment}
+            asset={adjustingAsset}
+          />
+        )}
 
         {/* Production Adjustment Modal */}
-        <ProductionAdjustmentModal
-          isOpen={isProductionAdjustModalOpen}
-          onClose={closeProductionAdjustModal}
-          onAdjust={handleProductionQuantityAdjustment}
-          production={adjustingProduction}
-        />
+        {hasPermission('productions', 'adjust') && (
+          <ProductionAdjustmentModal
+            isOpen={isProductionAdjustModalOpen}
+            onClose={closeProductionAdjustModal}
+            onAdjust={handleProductionQuantityAdjustment}
+            production={adjustingProduction}
+          />
+        )}
       </div>
     </div>
   );

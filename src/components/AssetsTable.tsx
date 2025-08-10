@@ -5,12 +5,13 @@ import { Settings } from 'lucide-react';
 
 interface AssetsTableProps {
   assets: Asset[];
-  onEdit: (asset: Asset) => void;
-  onDelete: (id: string) => void;
-  onOpenQuantityAdjustment: (asset: Asset) => void;
+  onEdit?: (asset: Asset) => void;
+  onDelete?: (id: string) => void;
+  onOpenQuantityAdjustment?: (asset: Asset) => void;
+  userType: 'regular' | 'worker';
 }
 
-const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onOpenQuantityAdjustment }) => {
+const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onOpenQuantityAdjustment, userType }) => {
   const formatPrice = (price: number) => {
     return price > 0 ? `Rs.${price.toFixed(2)}` : '-';
   };
@@ -80,14 +81,16 @@ const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onO
                   {asset.quantity || '-'}
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                  <button
+                  {onOpenQuantityAdjustment && (
+                    <button
                     onClick={() => onOpenQuantityAdjustment(asset)}
                     className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-xs sm:text-sm"
                     title="Adjust quantity"
-                  >
+                    >
                     <Settings className="h-3 w-3 mr-1" />
                     Adjust
-                  </button>
+                    </button>
+                  )}
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
                   {formatDate(asset.purchasedDate)}
@@ -97,27 +100,33 @@ const AssetsTable: React.FC<AssetsTableProps> = ({ assets, onEdit, onDelete, onO
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex flex-col lg:flex-row gap-1 lg:gap-2">
-                    <button
+                    {onOpenQuantityAdjustment && (
+                      <button
                       onClick={() => onOpenQuantityAdjustment(asset)}
                       className="lg:hidden px-2 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded transition-colors text-xs"
                       title="Adjust quantity"
-                    >
+                      >
                       <Settings className="h-3 w-3" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button
                       onClick={() => onEdit(asset)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
                       title="Edit asset"
-                    >
+                      >
                       <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
                       onClick={() => onDelete(asset.id)}
                       className="text-red-600 hover:text-red-900 transition-colors"
                       title="Delete asset"
-                    >
+                      >
                       <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

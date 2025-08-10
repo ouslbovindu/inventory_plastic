@@ -5,12 +5,13 @@ import { Settings } from 'lucide-react';
 
 interface ProductionsTableProps {
   productions: Production[];
-  onEdit: (production: Production) => void;
-  onDelete: (id: string) => void;
-  onOpenQuantityAdjustment: (production: Production) => void;
+  onEdit?: (production: Production) => void;
+  onDelete?: (id: string) => void;
+  onOpenQuantityAdjustment?: (production: Production) => void;
+  userType: 'regular' | 'worker';
 }
 
-const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit, onDelete, onOpenQuantityAdjustment }) => {
+const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit, onDelete, onOpenQuantityAdjustment, userType }) => {
   if (productions.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 text-center">
@@ -65,14 +66,16 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit
                   {production.quantity || '-'}
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                  <button
+                  {onOpenQuantityAdjustment && (
+                    <button
                     onClick={() => onOpenQuantityAdjustment(production)}
                     className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors flex items-center text-xs sm:text-sm"
                     title="Adjust quantity"
-                  >
+                    >
                     <Settings className="h-3 w-3 mr-1" />
                     Adjust
-                  </button>
+                    </button>
+                  )}
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
                   {production.client}
@@ -82,27 +85,33 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({ productions, onEdit
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex flex-col lg:flex-row gap-1 lg:gap-2">
-                    <button
+                    {onOpenQuantityAdjustment && (
+                      <button
                       onClick={() => onOpenQuantityAdjustment(production)}
                       className="lg:hidden px-2 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded transition-colors text-xs"
                       title="Adjust quantity"
-                    >
+                      >
                       <Settings className="h-3 w-3" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button
                       onClick={() => onEdit(production)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
                       title="Edit production"
-                    >
+                      >
                       <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
-                    <button
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
                       onClick={() => onDelete(production.id)}
                       className="text-red-600 hover:text-red-900 transition-colors"
                       title="Delete production"
-                    >
+                      >
                       <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
