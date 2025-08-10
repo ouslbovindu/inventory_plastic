@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
 import { supabase } from './lib/supabase';
+import { WorkerAccount } from './types/inventory';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userType, setUserType] = useState<'regular' | 'worker'>('regular');
+  const [workerData, setWorkerData] = useState<WorkerAccount | null>(null);
 
   useEffect(() => {
     // Check for existing session
@@ -34,12 +37,18 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = (type: 'regular' | 'worker', worker?: WorkerAccount) => {
     setIsAuthenticated(true);
+    setUserType(type);
+    if (type === 'worker' && worker) {
+      setWorkerData(worker);
+    }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setUserType('regular');
+    setWorkerData(null);
   };
 
   if (isLoading) {
@@ -53,7 +62,11 @@ function App() {
   return (
     <div className="App">
       {isAuthenticated ? (
-        <Dashboard onLogout={handleLogout} />
+        <Dashboard 
+          onLogout={handleLogout} 
+          userType={userType}
+          workerData={workerData}
+        />
       ) : (
         <LoginForm onLogin={handleLogin} />
       )}

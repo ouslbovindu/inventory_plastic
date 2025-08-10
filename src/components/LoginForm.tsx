@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { LogIn, Eye, EyeOff, Mail } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { WorkerAccount } from '../types/inventory';
 
 interface LoginFormProps {
-  onLogin: () => void;
+  onLogin: (userType: 'regular' | 'worker', workerData?: WorkerAccount) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
@@ -17,6 +18,34 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
+  const [loginType, setLoginType] = useState<'regular' | 'worker'>('regular');
+
+  const checkWorkerAccount = async (username: string, password: string): Promise<WorkerAccount | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('worker_accounts')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        username: data.username,
+        password: data.password,
+        role: data.role,
+        permissions: data.permissions,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
+      };
+    } catch (error) {
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +64,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       setError('Password must be at least 6 characters long');
       setIsLoading(false);
       return;
+    }
+
+    // Check for worker account login
+    if (loginType === 'worker') {
+      const workerAccount = await checkWorkerAccount(email, password);
+      if (workerAccount) {
+        onLogin('worker', workerAccount);
+        return;
+      } else {
+        setError('Invalid worker credentials');
+        setIsLoading(false);
+        return;
+      }
     }
 
     try {
@@ -70,7 +112,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           if (data.user) {
             console.log('User authenticated:', data.user.id);
           }
-          onLogin();
+          onLogin('regular');
         }
       }
     } catch (err) {
@@ -121,18 +163,58 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           <p className="text-gray-600 mt-2">Plastic Raw Materials System</p>
         </div>
 
+        {/* Login Type Selector */}
+        <div className="mb-6">
+          <div className="flex rounded-lg bg-gray-100 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginType('regular');
+                setError('');
+                setSuccessMessage('');
+                setInfoMessage('');
+              }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                loginType === 'regular'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Admin Login
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginType('worker');
+                setIsSignUp(false);
+                setError('');
+                setSuccessMessage('');
+                setInfoMessage('');
+                setShowResendConfirmation(false);
+              }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                loginType === 'worker'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Worker Login
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+              {loginType === 'worker' ? 'Username' : 'Email Address'}
             </label>
             <input
-              type="email"
+              type={loginType === 'worker' ? 'text' : 'email'}
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-              placeholder="Enter your email address"
+              placeholder={loginType === 'worker' ? 'Enter your username' : 'Enter your email address'}
             />
           </div>
 
@@ -205,21 +287,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError('');
-              setSuccessMessage('');
-              setInfoMessage('');
-              setShowResendConfirmation(false);
-            }}
-            className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
-          </button>
-        </div>
+        {loginType === 'regular' && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+                setSuccessMessage('');
+                setInfoMessage('');
+                setShowResendConfirmation(false);
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
+            </button>
+          </div>
+        )}
+
+        {loginType === 'worker' && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">Worker Accounts:</h3>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p><strong>worker1</strong> / pass123</p>
+              <p><strong>worker2</strong> / pass123</p>
+              <p><strong>worker3</strong> / pass123</p>
+              <p><strong>worker4</strong> / pass123</p>
+              <p><strong>worker5</strong> / pass123</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

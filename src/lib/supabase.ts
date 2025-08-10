@@ -135,6 +135,35 @@ export type Database = {
           updated_at?: string;
         };
       };
+      worker_accounts: {
+        Row: {
+          id: string;
+          username: string;
+          password: string;
+          role: string;
+          permissions: any;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          username: string;
+          password: string;
+          role?: string;
+          permissions?: any;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          username?: string;
+          password?: string;
+          role?: string;
+          permissions?: any;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };

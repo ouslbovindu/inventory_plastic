@@ -53,3 +53,35 @@ export interface Production {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface WorkerAccount {
+  id: string;
+  username: string;
+  password: string;
+  role: string;
+  permissions: {
+    materials: {
+      view: boolean;
+      adjust: boolean;
+      add: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    productions: {
+      view: boolean;
+      adjust: boolean;
+      add: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    assets: {
+      view: boolean;
+      adjust: boolean;
+      add: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
