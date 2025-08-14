@@ -22,12 +22,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
   const checkWorkerAccount = async (username: string, password: string): Promise<WorkerAccount | null> => {
     try {
-      const { data, error } = await supabase
-        .from('worker_accounts')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .maybeSingle();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username, // workers now log in with email
+        password: password
+      });
+      
+      if (error) {
+        console.error(error);
+        alert('Invalid worker credentials');
+        return;
+      }
+      
+      // Optional: check role from metadata
+      if (data.user.user_metadata.role !== 'worker') {
+        alert('Not a worker account');
+        await supabase.auth.signOut();
+        return;
+      }
+      
+      console.log('Worker logged in:', data.user);
+
 
       if (error || !data) {
         return null;
