@@ -11,6 +11,13 @@ function App() {
   const [workerData, setWorkerData] = useState<WorkerAccount | null>(null);
 
   useEffect(() => {
+    // Check if Supabase is properly configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.warn('Supabase environment variables not found');
+      setIsLoading(false);
+      return;
+    }
+
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);

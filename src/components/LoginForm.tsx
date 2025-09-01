@@ -22,6 +22,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
   const checkWorkerAccount = async (username: string, password: string): Promise<WorkerAccount | null> => {
     try {
+      // Check if Supabase is properly configured
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        setError('Supabase is not configured. Please connect to Supabase first.');
+        return null;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: username, // workers now log in with email
         password: password
@@ -57,6 +63,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         updatedAt: new Date(data.updated_at)
       };
     } catch (error) {
+      console.error('Worker login error:', error);
+      setError('Unable to connect to database. Please check your connection.');
       return null;
     }
   };
