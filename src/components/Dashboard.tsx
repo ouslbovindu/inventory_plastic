@@ -108,7 +108,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
         status: item.status,
         repurchaseMargin: item.repurchase_margin,
         note: item.note,
-        userId: item.user_id,
         siteLocation: item.site_location,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at)
@@ -141,7 +140,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
         quantityNumeric: asset.quantity_numeric,
         purchasedDate: asset.purchased_date ? new Date(asset.purchased_date) : null,
         note: asset.note,
-        userId: asset.user_id,
         siteLocation: asset.site_location,
         createdAt: new Date(asset.created_at),
         updatedAt: new Date(asset.updated_at)
@@ -173,7 +171,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
         quantityNumeric: production.quantity_numeric,
         client: production.client,
         note: production.note,
-        userId: production.user_id,
         siteLocation: production.site_location,
         createdAt: new Date(production.created_at),
         updatedAt: new Date(production.updated_at)
@@ -191,9 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
     return 'in stock';
   };
 
-  const handleAddItem = async (itemData: Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (!user) return;
-
+  const handleAddItem = async (itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     const status = calculateStatus(itemData.stock, itemData.repurchaseMargin);
 
     try {
@@ -207,7 +202,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
           status: status,
           repurchase_margin: itemData.repurchaseMargin,
           note: itemData.note,
-          user_id: user.id,
           site_location: selectedSite
         });
 
@@ -222,9 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
     }
   };
 
-  const handleAddAsset = async (assetData: Omit<Asset, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (!user) return;
-
+  const handleAddAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { error } = await supabase
         .from('assets')
@@ -235,7 +227,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
           quantity_numeric: assetData.quantityNumeric,
           purchased_date: assetData.purchasedDate ? assetData.purchasedDate.toISOString().split('T')[0] : null,
           note: assetData.note,
-          user_id: user.id,
           site_location: selectedSite
         });
 
@@ -250,9 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
     }
   };
 
-  const handleAddProduction = async (productionData: Omit<Production, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (!user) return;
-
+  const handleAddProduction = async (productionData: Omit<Production, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { error } = await supabase
         .from('productions')
@@ -262,7 +251,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, userType, workerData })
           quantity_numeric: productionData.quantityNumeric,
           client: productionData.client,
           note: productionData.note,
-          user_id: user.id,
           site_location: selectedSite
         });
 

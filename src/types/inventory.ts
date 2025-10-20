@@ -7,7 +7,6 @@ export interface InventoryItem {
   status: 'in stock' | 'repurchase needed' | 'temporarily unavailable';
   repurchaseMargin: number;
   note: string;
-  userId: string;
   siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
@@ -35,7 +34,6 @@ export interface Asset {
   quantityNumeric: number;
   purchasedDate: Date | null;
   note: string;
-  userId: string;
   siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
@@ -48,7 +46,6 @@ export interface Production {
   quantityNumeric: number;
   client: string;
   note: string;
-  userId: string;
   siteLocation: string;
   createdAt: Date;
   updatedAt: Date;
